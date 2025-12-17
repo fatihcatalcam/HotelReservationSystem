@@ -37,8 +37,14 @@ public class Main {
             System.out.println("5. Exit");
             System.out.print("Choose an option: ");
 
-            int choice = input.nextInt();
-            input.nextLine(); // buffer temizliği
+            int choice;
+
+            try {
+                choice = Integer.parseInt(input.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input! Please enter a number.\n");
+                continue;
+            }
 
             switch (choice) {
 
@@ -80,8 +86,15 @@ public class Main {
                     }
 
                     System.out.print("Enter room number: ");
-                    int roomNumber = input.nextInt();
-                    input.nextLine();
+                    int roomNumber;
+
+                    try {
+                        roomNumber = Integer.parseInt(input.nextLine());
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid room number!\n");
+                        break;
+                    }
+
 
                     Room selectedRoom = null;
 
@@ -98,11 +111,26 @@ public class Main {
                     }
 
                     // Dates
-                    System.out.print("Check-in date (YYYY-MM-DD): ");
-                    LocalDate checkIn = LocalDate.parse(input.nextLine());
+                    LocalDate checkIn;
+                    LocalDate checkOut;
 
-                    System.out.print("Check-out date (YYYY-MM-DD): ");
-                    LocalDate checkOut = LocalDate.parse(input.nextLine());
+                    try {
+                        System.out.print("Check-in date (YYYY-MM-DD): ");
+                        checkIn = LocalDate.parse(input.nextLine());
+
+                        System.out.print("Check-out date (YYYY-MM-DD): ");
+                        checkOut = LocalDate.parse(input.nextLine());
+
+                        if (!checkOut.isAfter(checkIn)) {
+                            System.out.println("ERROR: Check-out date must be after check-in date!\n");
+                            break;
+                        }
+
+                    } catch (Exception e) {
+                        System.out.println("Invalid date format! Please use YYYY-MM-DD.\n");
+                        break;
+                    }
+
 
                     Reservation reservation = manager.bookRoom(customer, selectedRoom, checkIn, checkOut);
                     
@@ -114,8 +142,15 @@ public class Main {
                         System.out.println("1. Cash");
                         System.out.println("2. Credit Card");
                         System.out.print("Choice: ");
-                        int payChoice = input.nextInt();
-                        input.nextLine();
+                        int payChoice;
+
+                        try {
+                            payChoice = Integer.parseInt(input.nextLine());
+                        } catch (Exception e) {
+                            System.out.println("Invalid selection! Defaulting to CASH.");
+                            payChoice = 1;
+                        }
+
 
                         Payment payment = null;
 

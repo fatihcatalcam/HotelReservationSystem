@@ -8,13 +8,18 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Scanner;
 
+import payment.Payment;
+import payment.CashPayment;
+import payment.CreditCardPayment;
+
+
 public class Main {
 
     public static void main(String[] args) {
 
         Scanner input = new Scanner(System.in);
 
-        Hotel hotel = new Hotel("GPT Hotel");
+        Hotel hotel = new Hotel("Hotel");
         ReservationManager manager = new ReservationManager();
 
         // Başlangıç için örnek odalar
@@ -100,6 +105,40 @@ public class Main {
                     LocalDate checkOut = LocalDate.parse(input.nextLine());
 
                     Reservation reservation = manager.bookRoom(customer, selectedRoom, checkIn, checkOut);
+                    
+                    if (reservation != null) {
+                        System.out.println("Reservation Successful!");
+                        System.out.println(reservation);
+
+                        System.out.println("\nSelect payment method:");
+                        System.out.println("1. Cash");
+                        System.out.println("2. Credit Card");
+                        System.out.print("Choice: ");
+                        int payChoice = input.nextInt();
+                        input.nextLine();
+
+                        Payment payment = null;
+
+                        if (payChoice == 1) {
+                            payment = new CashPayment();
+                        } else if (payChoice == 2) {
+                            payment = new CreditCardPayment();
+                        } else {
+                            System.out.println("Invalid payment option! Defaulting to CASH.");
+                            payment = new CashPayment();
+                        }
+
+                        // Ödeme işlemi burada yapılır
+                        boolean success = payment.pay(reservation.getTotalPrice());
+
+                        if (success) {
+                            System.out.println("Payment completed successfully.");
+                        } else {
+                            System.out.println("Payment failed.");
+                        }
+                    }
+
+                    
 
                     if (reservation != null) {
                         System.out.println("Reservation Successful!");

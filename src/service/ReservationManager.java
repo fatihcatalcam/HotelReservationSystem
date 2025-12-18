@@ -3,6 +3,8 @@ package service;
 import model.Room;
 import model.Customer;
 import reservation.Reservation;
+import model.Hotel;
+
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -29,7 +31,10 @@ public class ReservationManager {
         Reservation reservation = new Reservation(customer, room, checkIn, checkOut);
         reservations.add(reservation);
         room.setReserved(true);
+        
+        writeReservationToCSV(reservation);
 
+        
         System.out.println("✅ Reservation created successfully for " + customer.getName());
         return reservation;
     }
@@ -62,4 +67,70 @@ public class ReservationManager {
             }
         }
     }
+    public void writeReservationToCSV(Reservation reservation) {
+        String filePath = "reservations.csv";
+
+        String line = reservation.getCustomer().getCustomerId() + "," +
+                reservation.getRoom().getRoomNumber() + "," +
+                reservation.getCheckInDate() + "," +
+                reservation.getCheckOutDate() + "," +
+                reservation.getTotalPrice();
+
+        utils.CSVUtil.appendLine(filePath, line);
+    }
+    public void loadReservationsFromCSV(Hotel hotel, List<Customer> customers) {
+        String filePath = "reservations.csv";
+
+        List<String[]> rows = utils.CSVUtil.readAll(filePath);
+
+        for (String[] row : rows) {
+            if (row.length < 5) continue;
+
+            String customerId = row[0];
+            int roomNumber = Integer.parseInt(row[1]);
+            LocalDate checkIn = LocalDate.parse(row[2]);
+            LocalDate checkOut = LocalDate.parse(row[3]);
+
+            Customer customer = findCustomerById(customers, customerId);
+            Room room = findRoomByNumber(hotel, roomNumber);
+
+            // ⬇️ KRİTİK DÜZELTME BURADA
+            if (room != null) {
+
+                if (customer == null) {
+                    customer = new Customer(
+                            "Unknown",
+                            "unknown@mail.com",
+                            customerId
+                    );
+                    customers.add(customer);
+                }
+
+                Reservation reservation =
+                        new Reservation(customer, room, checkIn, checkOut);
+
+                reservations.add(reservation);
+                room.setReserved(true);
+            }
+        }
+    }
+
+    private Customer findCustomerById(List<Customer> customers, String id) {
+        for (Customer c : customers) {
+            if (c.getCustomerId().equals(id)) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    private Room findRoomByNumber(Hotel hotel, int roomNumber) {
+        for (Room r : hotel.getRooms()) {
+            if (r.getRoomNumber() == roomNumber) {
+                return r;
+            }
+        }
+        return null;
+    }
+
 }

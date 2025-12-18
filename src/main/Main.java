@@ -11,6 +11,7 @@ import java.util.Scanner;
 import payment.Payment;
 import payment.CashPayment;
 import payment.CreditCardPayment;
+import java.util.ArrayList;
 
 
 public class Main {
@@ -22,12 +23,21 @@ public class Main {
         Hotel hotel = new Hotel("Hotel");
         ReservationManager manager = new ReservationManager();
 
+        List<Customer> customers = new ArrayList<>();
+
+        
+        
         // Başlangıç için örnek odalar
         hotel.addRoom(new DeluxeRoom(101, 1500, 2));
         hotel.addRoom(new StandardRoom(102, 800, 2));
         hotel.addRoom(new StandardRoom(103, 900, 3));
         hotel.addRoom(new DeluxeRoom(104, 2000, 4));
 
+        manager.loadReservationsFromCSV(hotel, customers);
+
+        System.out.println("CSV reservations loaded.");
+
+        
         while (true) {
             System.out.println("========== HOTEL RESERVATION SYSTEM ==========");
             System.out.println("1. List available rooms");
@@ -224,4 +234,5 @@ public class Main {
             }
         }
     }
+    
 }

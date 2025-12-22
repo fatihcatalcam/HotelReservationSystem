@@ -115,6 +115,44 @@ public class ReservationManager {
         }
     }
 
+    public void writeCustomerToCSV(Customer customer) {
+        String filePath = "customers.csv";
+
+        String line =
+                customer.getCustomerId() + "," +
+                customer.getName() + "," +
+                customer.getEmail();
+
+        utils.CSVUtil.appendLine(filePath, line);
+    }
+
+    public void loadCustomersFromCSV(List<Customer> customers) {
+        String filePath = "customers.csv";
+
+        List<String[]> rows = utils.CSVUtil.readAll(filePath);
+
+        for (String[] row : rows) {
+            if (row.length < 3) continue;
+
+            String id = row[0];
+            String name = row[1];
+            String email = row[2];
+
+            // Aynı customer tekrar eklenmesin
+            boolean exists = false;
+            for (Customer c : customers) {
+                if (c.getCustomerId().equals(id)) {
+                    exists = true;
+                    break;
+                }
+            }
+
+            if (!exists) {
+                customers.add(new Customer(name, email, id));
+            }
+        }
+    }
+
     private Customer findCustomerById(List<Customer> customers, String id) {
         for (Customer c : customers) {
             if (c.getCustomerId().equals(id)) {

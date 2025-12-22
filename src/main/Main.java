@@ -24,16 +24,19 @@ public class Main {
 
         List<Customer> customers = new ArrayList<>();
 
-        // Başlangıç odaları
+        // ----------------- ROOM INITIALIZATION -----------------
         hotel.addRoom(new DeluxeRoom(101, 1500, 2));
         hotel.addRoom(new StandardRoom(102, 800, 2));
         hotel.addRoom(new StandardRoom(103, 900, 3));
         hotel.addRoom(new DeluxeRoom(104, 2000, 4));
 
-        // CSV'den rezervasyonları yükle (odalar eklendikten sonra!)
+        // ----------------- CSV LOAD ORDER (CRITICAL) -----------------
+        manager.loadCustomersFromCSV(customers);
         manager.loadReservationsFromCSV(hotel, customers);
-        System.out.println("CSV reservations loaded.");
 
+        System.out.println("CSV data loaded successfully.");
+
+        // ----------------- MAIN MENU -----------------
         while (true) {
             System.out.println("========== HOTEL RESERVATION SYSTEM ==========");
             System.out.println("1. List available rooms");
@@ -73,8 +76,21 @@ public class Main {
                     System.out.print("Customer ID: ");
                     String id = input.nextLine();
 
-                    Customer customer = new Customer(name, email, id);
-                    customers.add(customer);
+                    Customer customer = null;
+
+                    // Aynı customer tekrar eklenmesin
+                    for (Customer c : customers) {
+                        if (c.getCustomerId().equals(id)) {
+                            customer = c;
+                            break;
+                        }
+                    }
+
+                    if (customer == null) {
+                        customer = new Customer(name, email, id);
+                        customers.add(customer);
+                        manager.writeCustomerToCSV(customer);
+                    }
 
                     List<Room> freeRooms = hotel.searchAvailableRooms();
                     if (freeRooms.isEmpty()) {

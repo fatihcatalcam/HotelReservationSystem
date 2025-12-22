@@ -5,14 +5,13 @@ import reservation.Reservation;
 import service.ReservationManager;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 import payment.Payment;
 import payment.CashPayment;
 import payment.CreditCardPayment;
-import java.util.ArrayList;
-
 
 public class Main {
 
@@ -25,19 +24,16 @@ public class Main {
 
         List<Customer> customers = new ArrayList<>();
 
-        
-        
-        // Başlangıç için örnek odalar
+        // Başlangıç odaları
         hotel.addRoom(new DeluxeRoom(101, 1500, 2));
         hotel.addRoom(new StandardRoom(102, 800, 2));
         hotel.addRoom(new StandardRoom(103, 900, 3));
         hotel.addRoom(new DeluxeRoom(104, 2000, 4));
 
+        // CSV'den rezervasyonları yükle (odalar eklendikten sonra!)
         manager.loadReservationsFromCSV(hotel, customers);
-
         System.out.println("CSV reservations loaded.");
 
-        
         while (true) {
             System.out.println("========== HOTEL RESERVATION SYSTEM ==========");
             System.out.println("1. List available rooms");
@@ -48,7 +44,6 @@ public class Main {
             System.out.print("Choose an option: ");
 
             int choice;
-
             try {
                 choice = Integer.parseInt(input.nextLine());
             } catch (NumberFormatException e) {
@@ -60,8 +55,7 @@ public class Main {
 
                 case 1:
                     System.out.println("\nAvailable Rooms:");
-                    List<Room> availableRooms = hotel.searchAvailableRooms();
-                    for (Room room : availableRooms) {
+                    for (Room room : hotel.searchAvailableRooms()) {
                         System.out.println(room);
                     }
                     System.out.println();
@@ -70,7 +64,6 @@ public class Main {
                 case 2:
                     System.out.println("\n--- Make Reservation ---");
 
-                    // Customer info
                     System.out.print("Customer Name: ");
                     String name = input.nextLine();
 
@@ -81,11 +74,9 @@ public class Main {
                     String id = input.nextLine();
 
                     Customer customer = new Customer(name, email, id);
+                    customers.add(customer);
 
-                    // Select room
-                    System.out.println("\nAvailable Rooms:");
                     List<Room> freeRooms = hotel.searchAvailableRooms();
-
                     if (freeRooms.isEmpty()) {
                         System.out.println("No rooms available!\n");
                         break;
@@ -97,7 +88,6 @@ public class Main {
 
                     System.out.print("Enter room number: ");
                     int roomNumber;
-
                     try {
                         roomNumber = Integer.parseInt(input.nextLine());
                     } catch (NumberFormatException e) {
@@ -105,9 +95,7 @@ public class Main {
                         break;
                     }
 
-
                     Room selectedRoom = null;
-
                     for (Room r : freeRooms) {
                         if (r.getRoomNumber() == roomNumber) {
                             selectedRoom = r;
@@ -120,10 +108,8 @@ public class Main {
                         break;
                     }
 
-                    // Dates
                     LocalDate checkIn;
                     LocalDate checkOut;
-
                     try {
                         System.out.print("Check-in date (YYYY-MM-DD): ");
                         checkIn = LocalDate.parse(input.nextLine());
@@ -132,89 +118,68 @@ public class Main {
                         checkOut = LocalDate.parse(input.nextLine());
 
                         if (!checkOut.isAfter(checkIn)) {
-                            System.out.println("ERROR: Check-out date must be after check-in date!\n");
+                            System.out.println("Check-out must be after check-in!\n");
                             break;
                         }
-
                     } catch (Exception e) {
-                        System.out.println("Invalid date format! Please use YYYY-MM-DD.\n");
+                        System.out.println("Invalid date format!\n");
                         break;
                     }
 
+                    Reservation reservation =
+                            manager.bookRoom(customer, selectedRoom, checkIn, checkOut);
 
-                    Reservation reservation = manager.bookRoom(customer, selectedRoom, checkIn, checkOut);
-                    
-                    if (reservation != null) {
-                        System.out.println("Reservation Successful!");
-                        System.out.println(reservation);
+                    if (reservation == null) break;
 
-                        System.out.println("\nSelect payment method:");
-                        System.out.println("1. Cash");
-                        System.out.println("2. Credit Card");
-                        System.out.print("Choice: ");
-                        int payChoice;
+                    System.out.println(reservation);
 
-                        try {
-                            payChoice = Integer.parseInt(input.nextLine());
-                        } catch (Exception e) {
-                            System.out.println("Invalid selection! Defaulting to CASH.");
-                            payChoice = 1;
-                        }
+                    System.out.println("\nSelect payment method:");
+                    System.out.println("1. Cash");
+                    System.out.println("2. Credit Card");
+                    System.out.print("Choice: ");
 
-
-                        Payment payment = null;
-
-                        if (payChoice == 1) {
-                            payment = new CashPayment();
-                        } else if (payChoice == 2) {
-                            payment = new CreditCardPayment();
-                        } else {
-                            System.out.println("Invalid payment option! Defaulting to CASH.");
-                            payment = new CashPayment();
-                        }
-
-                        // Ödeme işlemi burada yapılır
-                        boolean success = payment.pay(reservation.getTotalPrice());
-
-                        if (success) {
-                            System.out.println("Payment completed successfully.");
-                        } else {
-                            System.out.println("Payment failed.");
-                        }
+                    int payChoice;
+                    try {
+                        payChoice = Integer.parseInt(input.nextLine());
+                    } catch (Exception e) {
+                        payChoice = 1;
                     }
 
-                    
+                    Payment payment =
+                            (payChoice == 2) ? new CreditCardPayment() : new CashPayment();
 
-                    if (reservation != null) {
-                        System.out.println("Reservation Successful!");
-                        System.out.println(reservation);
-                    }
-                    System.out.println();
+                    payment.pay(reservation.getTotalPrice());
+                    System.out.println("Payment completed.\n");
                     break;
 
                 case 3:
                     System.out.println("\n--- Cancel Reservation ---");
 
-                    List<Reservation> allReservations = manager.getReservations();
-
-                    if (allReservations.isEmpty()) {
-                        System.out.println("No reservations to cancel!\n");
+                    List<Reservation> all = manager.getReservations();
+                    if (all.isEmpty()) {
+                        System.out.println("No reservations found.\n");
                         break;
                     }
 
-                    for (int i = 0; i < allReservations.size(); i++) {
-                        System.out.println((i + 1) + ". " + allReservations.get(i));
+                    for (int i = 0; i < all.size(); i++) {
+                        System.out.println((i + 1) + ". " + all.get(i));
                     }
 
-                    System.out.print("Choose reservation number to cancel: ");
-                    int resIndex = input.nextInt() - 1;
-
-                    if (resIndex < 0 || resIndex >= allReservations.size()) {
-                        System.out.println("Invalid choice!\n");
+                    System.out.print("Choose reservation number: ");
+                    int index;
+                    try {
+                        index = Integer.parseInt(input.nextLine()) - 1;
+                    } catch (Exception e) {
+                        System.out.println("Invalid input!\n");
                         break;
                     }
 
-                    manager.cancelReservation(allReservations.get(resIndex));
+                    if (index < 0 || index >= all.size()) {
+                        System.out.println("Invalid selection!\n");
+                        break;
+                    }
+
+                    manager.cancelReservation(all.get(index));
                     System.out.println();
                     break;
 
@@ -225,7 +190,9 @@ public class Main {
                     break;
 
                 case 5:
-                    System.out.println("Exit...");
+                    hotel.writeRoomsToCSV();
+                    System.out.println("Rooms saved. Exiting...");
+                    input.close();
                     System.exit(0);
                     break;
 
@@ -234,5 +201,4 @@ public class Main {
             }
         }
     }
-    
 }
